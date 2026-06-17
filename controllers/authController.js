@@ -264,6 +264,116 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
+const changePassword = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const {
+      currentPassword,
+      newPassword,
+    } = req.body;
+
+    const user = await User.findById(
+      req.user._id
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "User not found",
+      });
+    }
+
+    // Verify current password
+    const isMatch =
+      await bcrypt.compare(
+        currentPassword,
+        user.password
+      );
+
+    if (!isMatch) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Current password is incorrect",
+      });
+    }
+
+    // Prevent password reuse
+    const samePassword =
+      await bcrypt.compare(
+        newPassword,
+        user.password
+      );
+
+    if (samePassword) {
+      return res.status(400).json({
+        success: false,
+        message:
+          "New password must be different from current password",
+      });
+    }
+
+    // Hash new password
+    const hashedPassword =
+      await bcrypt.hash(
+        newPassword,
+        10
+      );
+
+    user.password =
+      hashedPassword;
+
+    await user.save();
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Password changed successfully",
+    });
+
+  } catch (error) {
+
+    console.error(
+      "Error in changePassword controller:",
+      {
+        message: error.message,
+        name: error.name,
+        stack: error.stack,
+        userId: req.user?._id,
+      }
+    );
+
+    // Database related errors
+    if (
+      error.name === "MongoServerError" ||
+      error.name === "MongooseError"
+    ) {
+      return res.status(500).json({
+        success: false,
+        message:
+          "Database error while changing password",
+      });
+    }
+
+    // Bcrypt related errors
+    if (
+      error.message?.includes("bcrypt")
+    ) {
+      return res.status(500).json({
+        success: false,
+        message:
+          "Password encryption failed",
+      });
+    }
+
+    // Pass unknown errors to global handler
+    next(error);
+  }
+};
+
 module.exports = {
   signup,
   login,
@@ -271,6 +381,7 @@ module.exports = {
   getCurrentUser,
   forgotPassword,
   resetPassword,
+  changePassword
 };
 
 // verifyEmail
