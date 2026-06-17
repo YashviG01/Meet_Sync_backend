@@ -11,12 +11,8 @@ if(token)
 {//token,secret,options
     const decodedToken=jwt.verify(token,process.env.JWT_SECRET); 
     const resp=await User.findById(decodedToken.id).select("-password");//only fetch the required data ,not the complete details of the user
-    req.user={
-        email:resp.email,
-        userId:decodedToken.id
-    }
+    req.user=resp;
     next();
-    // req.user=decodedToken;  
 }
 
     }
@@ -26,4 +22,4 @@ catch(err){
    return res.status(401).json({ status:false ,message:"not authorized.try logging in again"});
 
 }}
-module.exports={protectRoute}
+module.exports={protectRoute};

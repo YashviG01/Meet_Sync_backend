@@ -3,8 +3,9 @@ const bcrypt = require("bcryptjs");
 const generateToken = require("../utils/generateToken");
 const crypto = require("crypto");
 //signup
-exports.signup = async (req, res, next) => {
+ const signup = async (req, res, next) => {
   try {
+    console.log("signup invoked")
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     //user exists already
@@ -44,11 +45,8 @@ exports.signup = async (req, res, next) => {
 };
 
 //login
-const User = require("../models/User");
-const bcrypt = require("bcryptjs");
-const generateToken = require("../utils/generateToken");
 
-exports.login = async (req, res, next) => {
+ const login = async (req, res, next) => {
   try {
     let { email, password } = req.body;
 
@@ -102,7 +100,7 @@ exports.login = async (req, res, next) => {
 };
 
 //logout
-exports.logout = async (req, res, next) => {
+ const logout = async (req, res, next) => {
   try {
     res.clearCookie("token", {
       httpOnly: true,
@@ -119,7 +117,7 @@ exports.logout = async (req, res, next) => {
   }
 };
 //getCurrentUser
-exports.getCurrentUser = async (req, res, next) => {
+ const getCurrentUser = async (req, res, next) => {
   try {
     return res.status(200).json({
       success: true,
@@ -131,7 +129,7 @@ exports.getCurrentUser = async (req, res, next) => {
 };
 //forgotPassword
 
-exports.forgotPassword = async (
+ const forgotPassword = async (
     req,
     res,
     next
@@ -192,7 +190,7 @@ exports.forgotPassword = async (
     }
 };
 // resetPassword
-exports.resetPassword = async (
+ const resetPassword = async (
     req,
     res,
     next
@@ -255,75 +253,82 @@ exports.resetPassword = async (
     }catch(error){
         next(error);
     }
-};// verifyEmail
+};
+
+
+ module.exports={signup,login,logout,getCurrentUser,forgotPassword,resetPassword}
+
+
+
+// verifyEmail
 
 // refreshToken
 
+
 // changePassword
+// exports.changePassword = async (
+//     req,
+//     res,
+//     next
+// )=>{
+//     try{
 
-exports.changePassword = async (
-    req,
-    res,
-    next
-)=>{
-    try{
+//         const {
+//             currentPassword,
+//             newPassword
+//         } = req.body;
 
-        const {
-            currentPassword,
-            newPassword
-        } = req.body;
+//         const user =
+//         await User.findById(
+//             req.user._id
+//         );
 
-        const user =
-        await User.findById(
-            req.user._id
-        );
+//         const isMatch =
+//         await bcrypt.compare(
+//             currentPassword,
+//             user.password
+//         );
 
-        const isMatch =
-        await bcrypt.compare(
-            currentPassword,
-            user.password
-        );
+//         if(!isMatch){
+//             return res.status(400).json({
+//                 success:false,
+//                 message:
+//                 "Current password is incorrect"
+//             });
+//         }
 
-        if(!isMatch){
-            return res.status(400).json({
-                success:false,
-                message:
-                "Current password is incorrect"
-            });
-        }
+//         const samePassword =
+//         await bcrypt.compare(
+//             newPassword,
+//             user.password
+//         );
 
-        const samePassword =
-        await bcrypt.compare(
-            newPassword,
-            user.password
-        );
+//         if(samePassword){
+//             return res.status(400).json({
+//                 success:false,
+//                 message:
+//                 "New password must be different from current password"
+//             });
+//         }
 
-        if(samePassword){
-            return res.status(400).json({
-                success:false,
-                message:
-                "New password must be different from current password"
-            });
-        }
+//         const hashedPassword =
+//         await bcrypt.hash(
+//             newPassword,
+//             10
+//         );
 
-        const hashedPassword =
-        await bcrypt.hash(
-            newPassword,
-            10
-        );
+//         user.password =
+//             hashedPassword;
 
-        user.password =
-            hashedPassword;
+//         await user.save();
 
-        await user.save();
+//         return res.status(200).json({
+//             success:true,
+//             message:
+//             "Password changed successfully"
+//         });
 
-        return res.status(200).json({
-            success:true,
-            message:
-            "Password changed successfully"
-        });
-
-    }catch(error){
-        next(error);
-    }
-};
+//     }catch(error){
+//         next(error);
+//     }
+// };
