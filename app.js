@@ -7,6 +7,8 @@ const helmet = require("helmet");
 const cookieParser = require("cookie-parser");
 const { routeNotFound,errorHandler } = require("./middlewares/errorMiddleware");
 const authRoutes = require("./routes/authRoutes");
+const meetingRoutes = require("./routes/meetingRoutes");
+
 const app = express();
 
 app.use(express.json());
@@ -20,6 +22,7 @@ app.use(helmet());
 
 //routes
 app.use("/api/auth", authRoutes);
+app.use("/api/meeting", meetingRoutes);
 
 //middlewares
 app.use(routeNotFound)
