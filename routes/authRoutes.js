@@ -4,32 +4,39 @@ const router = express.Router();
 
 const { signup,login, logout,getCurrentUser,forgotPassword,resetPassword} = require("../controllers/authController");
 const { signupValidation, loginValidation,} = require("../validations/authValidation");
-
+const sendEmail=require("../utils/sendEmail")
 const validate = require("../middlewares/validationMiddleware");
 const {protectRoute} = require("../middlewares/authMiddleware");
-console.log(signup)
-// console.log({
-//   signup: typeof signup,
-//   login: typeof login,
-//   logout: typeof logout,
-//   getCurrentUser: typeof getCurrentUser,
-//   forgotPassword: typeof forgotPassword,
-//   resetPassword: typeof resetPassword,
 
-//   signupValidation: typeof signupValidation,
-//   loginValidation: typeof loginValidation,
 
-//   validate: typeof validate,
-//   protectRoute: typeof protectRoute,
-// });
-
-console.log("invoking signup")
-router.post("/signup",  (req, res, next) => {
-  console.log("ROUTE HIT: signup");
-  next();},signupValidation, validate, signup);
-console.log("after invoking signup")
+router.post("/signup",  signupValidation, validate, signup);
 router.post("/login", loginValidation, validate, login);
 router.post("/logout",  logout);
+
+
+//testing email utility
+
+router.get(
+  "/test-email",
+  async (req, res) => {
+
+    await sendEmail({
+      to: "yashvigenius112@gmail.com",
+
+      subject: "Testing Email",
+
+      html: `
+        <h1>Hello</h1>
+        <p>Email service working.</p>
+      `,
+    });
+
+    res.send("Email sent");
+  }
+);
+
+
+
 
 router.post("/forgot-password", forgotPassword);
 

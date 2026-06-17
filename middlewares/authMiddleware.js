@@ -3,6 +3,7 @@ const User=require("../models/User.js");// model importing for loking up later
 const protectRoute=async(req,res,next)=>{
    console.log("protectRoute middleware invoked");
     try{
+        console.log("COOKIE:", req.cookies);
         const token=req.cookies.token;
         if(!token){
             return res.status(401).json({message:"Unauthorized. No token provided."});
@@ -10,8 +11,11 @@ const protectRoute=async(req,res,next)=>{
 if(token)
 {//token,secret,options
     const decodedToken=jwt.verify(token,process.env.JWT_SECRET); 
-    const resp=await User.findById(decodedToken.id).select("-password");//only fetch the required data ,not the complete details of the user
+    console.log("decodedToken",decodedToken)
+    const resp=await User.findById(decodedToken.userId).select("-password");//only fetch the required data ,not the complete details of the user
+    console.log("resp",resp)
     req.user=resp;
+    console.log("req.user",req.user)
     next();
 }
 
@@ -22,4 +26,4 @@ catch(err){
    return res.status(401).json({ status:false ,message:"not authorized.try logging in again"});
 
 }}
-module.exports={protectRoute};
+module.exports={protectRoute}
