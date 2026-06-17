@@ -10,7 +10,7 @@ const protectRoute=async(req,res,next)=>{
 if(token)
 {//token,secret,options
     const decodedToken=jwt.verify(token,process.env.JWT_SECRET); 
-    const resp=await User.findById(decodedToken.id).select("isAdmin email");//only fetch the required data ,not the complete details of the user
+    const resp=await User.findById(decodedToken.id).select("-password");//only fetch the required data ,not the complete details of the user
     req.user={
         email:resp.email,
         userId:decodedToken.id
