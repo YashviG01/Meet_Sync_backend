@@ -4,6 +4,7 @@ const crypto = require("crypto");
 const Meeting = require("../models/Meeting");
 const crypto = require("crypto");
 
+//schedule a meet
 const createMeeting = async (req, res, next) => {
   try {
     const { title, description, startTime, endTime } = req.body;
@@ -212,12 +213,92 @@ const meetingDetails = {
 
 
 
-//join button
-// const joinRoom = async () => {}
+//join button(both the flows covered)
+
+const joinMeeting = async (req, res, next) => {
+  try {
+    const { meetingId } = req.params;
+    const userId = req.user.userId;
+
+    const meeting = await Meeting.findOne({
+      roomId: meetingId,
+    });
+
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+
+    // Meeting cancelled
+    if (meeting.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message: "This meeting has been cancelled",
+      });
+    }
+
+    // Meeting ended
+    if (meeting.status === "completed") {
+      return res.status(400).json({
+        success: false,
+        message: "This meeting has already ended",
+      });
+    }
+
+    const isHost =
+      meeting.organizer.toString() ===
+      userId.toString();
+
+    
+    //   If host joins a scheduled meeting,
+    //   automatically start it.
+    
+    if (
+      isHost &&
+      meeting.status === "scheduled"
+    ) {
+      meeting.status = "active";
+    }
+
+    const alreadyJoined =
+      meeting.participants.some(
+        (participant) =>
+          participant.toString() ===
+          userId.toString()
+      );
+
+    if (!alreadyJoined) {
+      meeting.participants.push(userId);
+    }
+
+    await meeting.save();
+
+    return res.status(200).json({
+      success: true,
+      message: alreadyJoined
+        ? "You have already joined this meeting"
+        : "Joined meeting successfully",
+
+      roomId: meeting.roomId,
+
+      meetingStatus: meeting.status,
+
+      isHost,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+//(host only)
+const endMeeting = async () => {}
 
 // const startMeeting = async () => {}
 
-// const endMeeting = async () => {}
 
 // const deleteMeeting = async () => {}
 
@@ -243,5 +324,6 @@ const meetingDetails = {
 // };
 
 module.exports = {
-  createMeeting,getMyMeetings,getMeetingById,
+  createMeeting,getMyMeetings,getMeetingById,joinMeeting ,endMeeting ,
+
 };
