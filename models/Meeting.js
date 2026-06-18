@@ -31,6 +31,7 @@ const meetingSchema = new mongoose.Schema(
       type: String,
       required: true,
       unique: true,
+       index: true,
     },
 
     startTime: {
@@ -59,9 +60,9 @@ const meetingSchema = new mongoose.Schema(
   }
 );
 
-// meetingSchema.index({ roomId: 1 });
-// meetingSchema.index({ organizer: 1 });
-// meetingSchema.index({ startTime: 1 });
+meetingSchema.index({ roomId: 1 });
+meetingSchema.index({ organizer: 1 });
+meetingSchema.index({ startTime: 1 });
 
 module.exports = mongoose.model(
   "Meeting",

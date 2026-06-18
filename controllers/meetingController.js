@@ -1,31 +1,24 @@
 const Meeting = require("../models/Meeting");
 const crypto = require("crypto");
 
+const Meeting = require("../models/Meeting");
+const crypto = require("crypto");
+
 const createMeeting = async (req, res, next) => {
   try {
-    const { title, description, startTime, endTime } = req.body;//extract
+    const { title, description, startTime, endTime } = req.body;
 
-    // if (!req.user) {
-    //   return res.status(401).json({
-    //     success: false,
-    //     message: "Unauthorized",
-    //   });
-    // }
+    const organizer = req.user._id;
 
     const start = new Date(startTime);
     const end = new Date(endTime);
+    const now = new Date();
 
-    if (isNaN(start.getTime())) {
+    // validation
+    if (start < now) {
       return res.status(400).json({
         success: false,
-        message: "Invalid start time",
-      });
-    }
-
-    if (isNaN(end.getTime())) {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid end time",
+        message: "Start time cannot be in the past",
       });
     }
 
@@ -36,74 +29,205 @@ const createMeeting = async (req, res, next) => {
       });
     }
 
-    let roomId;
-    let existingRoom;
-//create a room and room id
-    do {
-        //id created
-      roomId = "meetsync-" + crypto.randomBytes(4).toString("hex");
-
-      existingRoom = await Meeting.findOne({
-        roomId,//find if a room existes with this id
-      });
-    } while (existingRoom);//if exists then find another one else breal out
-
-
+    // generate roomId (IMPORTANT FOR YOUR SCHEMA)
+    const roomId = crypto.randomBytes(6).toString("hex");
 
     const meeting = await Meeting.create({
       title,
       description,
-      organizer: req.user._id,
-//right now,the participant is the owner itself
-      participants: [req.user._id],
-
+      organizer,
       roomId,
-
       startTime: start,
       endTime: end,
-
+      participants: [organizer],
       status: "scheduled",
     });
 
+    const joinLink = `${process.env.CLIENT_URL}/meeting/join/${roomId}`;
+
     return res.status(201).json({
       success: true,
-      message: "Meeting scheduled successfully",
-
       meeting,
-
-      meetingLink: `${process.env.CLIENT_URL}/room/${roomId}`,
+      joinLink,
     });
-  } catch (error) {
-    console.error("Create Meeting Error:", error);
 
+  } catch (error) {
     next(error);
   }
 };
 
-module.exports = {
-  createMeeting,
+
+
+
+// GET    /api/meetings        → get my meetings
+const getMyMeetings = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
+
+   
+    if (!userId) {
+      return res.status(401).json({
+        success: false,
+        message: "Unauthorized access",
+      });
+    }
+
+    //collect all the meetings
+    //it would appear in the participants dashboard after the person has joined the meet.it would appear from the start in the dashboard of the person who is the host
+    const meetings = await Meeting.find({
+      $or: [
+        { organizer: userId },
+        { participants: userId },
+      ],
+    })
+      .populate("organizer", "name email")
+      .populate("participants", "name email")
+      .sort({ startTime: 1 }); // upcoming first
+
+    
+    if (!meetings || meetings.length === 0) {
+      return res.status(200).json({
+        success: true,
+        message: "No meetings found",
+        meetings: [],
+      });
+    }
+
+   //transforming raw to frontend friendly data for each meeting details
+    const enrichedMeetings = meetings.map((m) => {
+      return {
+        _id: m._id,
+        title: m.title,
+        description: m.description,
+        meetingId: m.roomId,
+        organizer: m.organizer,
+        participants: m.participants,
+        startTime: m.startTime,
+        endTime: m.endTime,
+        status: m.status,
+
+        isHost: m.organizer._id.toString() === userId.toString(),
+      };
+    });
+
+    
+    return res.status(200).json({
+      success: true,
+      count: enrichedMeetings.length,
+      meetings: enrichedMeetings,
+    });
+
+  } catch (error) {
+    next(error);
+  }
 };
 
-// const getMyMeetings = async () => {}
 
 
 
-// const getMeetingById = async () => {}
+// GET    /api/meetings/:id    → get meeting details
+const getMeetingById = async (req, res, next) => {
+  try {
+    const {roomId } = req.params;
+   
+    const userId = req.user.userId;
+
+    const meeting = await Meeting.findOne({
+      roomId: meetingId,
+    })
+      .populate("organizer", "name email")
+      .populate("participants", "name email");
+
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+//useful for frontend may use it to show edit meeting, delete meeting,cancel meeting that are host specific opertions
+    const isHost =
+      meeting.organizer._id.toString() ===
+      userId.toString();
 
 
-// const updateMeeting = async () => {}
 
-// const deleteMeeting = async () => {}
 
-// const inviteParticipant = async () => {}
+//enriching for frontend for better display
+   const now = new Date();
 
-// const removeParticipant = async () => {}
+const meetingDetails = {
+  id: meeting._id,
+  meetingId: meeting.roomId,
+  roomId: meeting.roomId,
 
+  title: meeting.title,
+  description: meeting.description,
+
+  organizer: meeting.organizer,
+  participants: meeting.participants,
+
+  participantCount:
+    meeting.participants.length,
+
+  startTime: meeting.startTime,
+  endTime: meeting.endTime,
+   durationInMinutes: Math.floor(
+        (meeting.endTime - meeting.startTime) /
+          (1000 * 60)
+      ),
+
+  status: meeting.status,
+
+  isHost,
+
+  joinLink: `${process.env.CLIENT_URL}/meeting/${meeting.roomId}`,
+
+  canJoin: !["cancelled", "completed"].includes(
+    meeting.status
+  ),
+
+  isUpcoming:
+    meeting.status === "scheduled" &&
+    new Date(meeting.startTime) > now,
+
+  isActive:
+    meeting.status === "active",
+
+  isCompleted:
+    meeting.status === "completed",
+
+  createdAt: meeting.createdAt,
+  updatedAt: meeting.updatedAt,
+};
+
+    return res.status(200).json({
+      success: true,
+      meeting: meetingDetails,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+
+
+//join button
 // const joinRoom = async () => {}
 
 // const startMeeting = async () => {}
 
 // const endMeeting = async () => {}
+
+// const deleteMeeting = async () => {}
+
+
+
+// const inviteParticipant = async () => {}
+
+// const removeParticipant = async () => {}
+// PATCH  /api/meetings/:id    → update meeting (time, title, etc.)
+// const updateMeeting = async () => {}
 
 // module.exports = {
 //   createMeeting,
@@ -117,3 +241,7 @@ module.exports = {
 //   startMeeting,
 //   endMeeting,
 // };
+
+module.exports = {
+  createMeeting,getMyMeetings,getMeetingById,
+};

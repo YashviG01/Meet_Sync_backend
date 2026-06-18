@@ -3,55 +3,89 @@ const express = require("express");
 const router = express.Router();
 
 const { protectRoute } = require("../middlewares/authMiddleware");
-const validate=require("../middlewares/validationMiddleware")
-const {createMeetingValidation}=require("../validations/createMeetingValidation")
+const validate = require("../middlewares/validationMiddleware");
+const {
+  createMeetingValidation,
+} = require("../validations/createMeetingValidation");
 const {
   createMeeting,
   getMyMeetings,
   getMeetingById,
-  updateMeeting,
-  deleteMeeting,
-  inviteParticipant,
-  removeParticipant,
-  joinRoom,
+  joinMeeting,
   startMeeting,
   endMeeting,
+  deleteMeeting,
 } = require("../controllers/meetingController");
 
 
-console.log(typeof(protectRoute),
- typeof( createMeetingValidation),
-  typeof(validate),
-  typeof(createMeeting))
-
 router.post(
-  "/createMeeting",
+  "/scheduleMeeting",
   protectRoute,
   createMeetingValidation,
   validate,
   createMeeting,
 );
+//for dashboard
+router.get("/", protectRoute, getMyMeetings);
 
-// router.get("/getMyMeetings", protectRoute, getMyMeetings);
+//dashboard
+ router.get(
+  "/:meetingId",
+  protectRoute,
+  getMeetingById
+);
 
-// router.get("/getMeetingById:meetingId", protectRoute, getMeetingById);
-
-// router.put("/updateMeeting:meetingId", protectRoute, updateMeeting);
-
-// router.delete("/:meetingId", protectRoute, deleteMeeting);
-
-// router.post("/:meetingId/invite", protectRoute, inviteParticipant);
-
-// router.delete(
-//   "/:meetingId/participants/:userId",
+//start an instant meeting on clicking start meeting button on homepage
+// router.post(
+//   "/start-instant",
 //   protectRoute,
-//   removeParticipant,
+//   startInstantMeeting
 // );
 
-// router.get("/room/:roomId", protectRoute, joinRoom);
 
-// router.patch("/:meetingId/start", protectRoute, startMeeting);
+// Join meeting
+//router.post("/:meetingId/join", protectRoute, joinMeeting);
 
-// router.patch("/:meetingId/end", protectRoute, endMeeting);
+
+//leave meeting
+// router.post(
+//   "/:meetingId/leave",
+//   protectRoute,
+//   leaveMeeting
+// );
+
+
+//update the meet(host only)
+// router.patch(
+//   "/:meetingId",
+//   protectRoute,
+//   createMeetingValidation,
+//   validate,
+//   updateMeeting
+// );
+
+
+//delete meet(host only)
+// router.delete( "/:meetingId", protectRoute, deleteMeeting);
+
+
+// Start meeting (host)
+// router.post("/:meetingId/start", protectRoute, startMeeting);
+
+//end meet(host only)
+// router.post(
+//   "/:meetingId/end",
+//   protectRoute,
+//   endMeeting
+// );
+
+//cancel scheduled meets(host only)
+// router.post(
+//   "/:meetingId/cancel",
+//   protectRoute,
+//   cancelMeeting
+// );
+
+
 
 module.exports = router;
