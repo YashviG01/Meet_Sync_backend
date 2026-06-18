@@ -295,12 +295,134 @@ const joinMeeting = async (req, res, next) => {
 
 
 //(host only)
-const endMeeting = async () => {}
 
-// const startMeeting = async () => {}
+const endMeeting = async (req, res, next) => {
+  try {
+    const { meetingId } = req.params;
+    const userId = req.user.userId;
+
+    const meeting = await Meeting.findOne({
+      roomId: meetingId,
+    });
+
+    // Meeting doesn't exist
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+
+    // Only organizer can end meeting
+    if (
+      meeting.organizer.toString() !==
+      userId.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only the host can end this meeting",
+      });
+    }
+
+    // Already ended
+    if (meeting.status === "completed") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Meeting has already been ended",
+      });
+    }
+
+    // Already cancelled
+    if (meeting.status === "cancelled") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "Cancelled meeting cannot be ended",
+      });
+    }
+
+    // End meeting
+    meeting.status = "completed";
+
+    await meeting.save();
+
+    return res.status(200).json({
+      success: true,
+      message: "Meeting ended successfully",
+
+      meeting: {
+        roomId: meeting.roomId,
+        status: meeting.status,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//(host only)
+const deleteMeeting = async (
+  req,
+  res,
+  next
+) => {
+  try {
+    const { meetingId } = req.params;
+    const userId = req.user.userId;
+
+    const meeting = await Meeting.findOne({
+      roomId: meetingId,
+    });
+
+    // Meeting not found
+    if (!meeting) {
+      return res.status(404).json({
+        success: false,
+        message: "Meeting not found",
+      });
+    }
+
+    // Only host can delete
+    if (
+      meeting.organizer.toString() !==
+      userId.toString()
+    ) {
+      return res.status(403).json({
+        success: false,
+        message:
+          "Only the host can delete this meeting",
+      });
+    }
+
+    // Optional safety check
+    if (meeting.status === "active") {
+      return res.status(400).json({
+        success: false,
+        message:
+          "End the meeting before deleting it",
+      });
+    }
+
+    await Meeting.deleteOne({
+      _id: meeting._id,
+    });
+
+    return res.status(200).json({
+      success: true,
+      message:
+        "Meeting deleted successfully",
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+//start meeting instantly on clicking start button on the home page
+const startMeeting = async () => {}
 
 
-// const deleteMeeting = async () => {}
 
 
 
@@ -324,6 +446,6 @@ const endMeeting = async () => {}
 // };
 
 module.exports = {
-  createMeeting,getMyMeetings,getMeetingById,joinMeeting ,endMeeting ,
+  createMeeting,getMyMeetings,getMeetingById,joinMeeting ,endMeeting ,deleteMeeting ,startMeeting
 
 };
