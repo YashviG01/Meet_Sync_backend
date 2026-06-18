@@ -51,21 +51,16 @@ const createMeeting = async (req, res, next) => {
       meeting,
       joinLink,
     });
-
   } catch (error) {
     next(error);
   }
 };
-
-
-
 
 // GET    /api/meetings        → get my meetings
 const getMyMeetings = async (req, res, next) => {
   try {
     const userId = req.user.userId;
 
-   
     if (!userId) {
       return res.status(401).json({
         success: false,
@@ -76,16 +71,12 @@ const getMyMeetings = async (req, res, next) => {
     //collect all the meetings
     //it would appear in the participants dashboard after the person has joined the meet.it would appear from the start in the dashboard of the person who is the host
     const meetings = await Meeting.find({
-      $or: [
-        { organizer: userId },
-        { participants: userId },
-      ],
+      $or: [{ organizer: userId }, { participants: userId }],
     })
       .populate("organizer", "name email")
       .populate("participants", "name email")
       .sort({ startTime: 1 }); // upcoming first
 
-    
     if (!meetings || meetings.length === 0) {
       return res.status(200).json({
         success: true,
@@ -94,7 +85,7 @@ const getMyMeetings = async (req, res, next) => {
       });
     }
 
-   //transforming raw to frontend friendly data for each meeting details
+    //transforming raw to frontend friendly data for each meeting details
     const enrichedMeetings = meetings.map((m) => {
       return {
         _id: m._id,
@@ -111,26 +102,21 @@ const getMyMeetings = async (req, res, next) => {
       };
     });
 
-    
     return res.status(200).json({
       success: true,
       count: enrichedMeetings.length,
       meetings: enrichedMeetings,
     });
-
   } catch (error) {
     next(error);
   }
 };
 
-
-
-
 // GET    /api/meetings/:id    → get meeting details
 const getMeetingById = async (req, res, next) => {
   try {
-    const {roomId } = req.params;
-   
+    const { roomId } = req.params;
+
     const userId = req.user.userId;
 
     const meeting = await Meeting.findOne({
@@ -145,61 +131,49 @@ const getMeetingById = async (req, res, next) => {
         message: "Meeting not found",
       });
     }
-//useful for frontend may use it to show edit meeting, delete meeting,cancel meeting that are host specific opertions
-    const isHost =
-      meeting.organizer._id.toString() ===
-      userId.toString();
+    //useful for frontend may use it to show edit meeting, delete meeting,cancel meeting that are host specific opertions
+    const isHost = meeting.organizer._id.toString() === userId.toString();
 
+    //enriching for frontend for better display
+    const now = new Date();
 
+    const meetingDetails = {
+      id: meeting._id,
+      meetingId: meeting.roomId,
+      roomId: meeting.roomId,
 
+      title: meeting.title,
+      description: meeting.description,
 
-//enriching for frontend for better display
-   const now = new Date();
+      organizer: meeting.organizer,
+      participants: meeting.participants,
 
-const meetingDetails = {
-  id: meeting._id,
-  meetingId: meeting.roomId,
-  roomId: meeting.roomId,
+      participantCount: meeting.participants.length,
 
-  title: meeting.title,
-  description: meeting.description,
-
-  organizer: meeting.organizer,
-  participants: meeting.participants,
-
-  participantCount:
-    meeting.participants.length,
-
-  startTime: meeting.startTime,
-  endTime: meeting.endTime,
-   durationInMinutes: Math.floor(
-        (meeting.endTime - meeting.startTime) /
-          (1000 * 60)
+      startTime: meeting.startTime,
+      endTime: meeting.endTime,
+      durationInMinutes: Math.floor(
+        (meeting.endTime - meeting.startTime) / (1000 * 60),
       ),
 
-  status: meeting.status,
+      status: meeting.status,
 
-  isHost,
+      isHost,
 
-  joinLink: `${process.env.CLIENT_URL}/meeting/${meeting.roomId}`,
+      joinLink: `${process.env.CLIENT_URL}/meeting/${meeting.roomId}`,
 
-  canJoin: !["cancelled", "completed"].includes(
-    meeting.status
-  ),
+      canJoin: !["cancelled", "completed"].includes(meeting.status),
 
-  isUpcoming:
-    meeting.status === "scheduled" &&
-    new Date(meeting.startTime) > now,
+      isUpcoming:
+        meeting.status === "scheduled" && new Date(meeting.startTime) > now,
 
-  isActive:
-    meeting.status === "active",
+      isActive: meeting.status === "active",
 
-  isCompleted:
-    meeting.status === "completed",
+      isCompleted: meeting.status === "completed",
 
-  createdAt: meeting.createdAt,
-  updatedAt: meeting.updatedAt,
-};
+      createdAt: meeting.createdAt,
+      updatedAt: meeting.updatedAt,
+    };
 
     return res.status(200).json({
       success: true,
@@ -209,9 +183,6 @@ const meetingDetails = {
     next(error);
   }
 };
-
-
-
 
 //join button(both the flows covered)
 
@@ -247,27 +218,18 @@ const joinMeeting = async (req, res, next) => {
       });
     }
 
-    const isHost =
-      meeting.organizer.toString() ===
-      userId.toString();
+    const isHost = meeting.organizer.toString() === userId.toString();
 
-    
     //   If host joins a scheduled meeting,
     //   automatically start it.
-    
-    if (
-      isHost &&
-      meeting.status === "scheduled"
-    ) {
+
+    if (isHost && meeting.status === "scheduled") {
       meeting.status = "active";
     }
 
-    const alreadyJoined =
-      meeting.participants.some(
-        (participant) =>
-          participant.toString() ===
-          userId.toString()
-      );
+    const alreadyJoined = meeting.participants.some(
+      (participant) => participant.toString() === userId.toString(),
+    );
 
     if (!alreadyJoined) {
       meeting.participants.push(userId);
@@ -292,8 +254,6 @@ const joinMeeting = async (req, res, next) => {
   }
 };
 
-
-
 //(host only)
 
 const endMeeting = async (req, res, next) => {
@@ -314,14 +274,10 @@ const endMeeting = async (req, res, next) => {
     }
 
     // Only organizer can end meeting
-    if (
-      meeting.organizer.toString() !==
-      userId.toString()
-    ) {
+    if (meeting.organizer.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
-        message:
-          "Only the host can end this meeting",
+        message: "Only the host can end this meeting",
       });
     }
 
@@ -329,8 +285,7 @@ const endMeeting = async (req, res, next) => {
     if (meeting.status === "completed") {
       return res.status(400).json({
         success: false,
-        message:
-          "Meeting has already been ended",
+        message: "Meeting has already been ended",
       });
     }
 
@@ -338,8 +293,7 @@ const endMeeting = async (req, res, next) => {
     if (meeting.status === "cancelled") {
       return res.status(400).json({
         success: false,
-        message:
-          "Cancelled meeting cannot be ended",
+        message: "Cancelled meeting cannot be ended",
       });
     }
 
@@ -363,11 +317,7 @@ const endMeeting = async (req, res, next) => {
 };
 
 //(host only)
-const deleteMeeting = async (
-  req,
-  res,
-  next
-) => {
+const deleteMeeting = async (req, res, next) => {
   try {
     const { meetingId } = req.params;
     const userId = req.user.userId;
@@ -385,14 +335,10 @@ const deleteMeeting = async (
     }
 
     // Only host can delete
-    if (
-      meeting.organizer.toString() !==
-      userId.toString()
-    ) {
+    if (meeting.organizer.toString() !== userId.toString()) {
       return res.status(403).json({
         success: false,
-        message:
-          "Only the host can delete this meeting",
+        message: "Only the host can delete this meeting",
       });
     }
 
@@ -400,8 +346,7 @@ const deleteMeeting = async (
     if (meeting.status === "active") {
       return res.status(400).json({
         success: false,
-        message:
-          "End the meeting before deleting it",
+        message: "End the meeting before deleting it",
       });
     }
 
@@ -411,8 +356,7 @@ const deleteMeeting = async (
 
     return res.status(200).json({
       success: true,
-      message:
-        "Meeting deleted successfully",
+      message: "Meeting deleted successfully",
     });
   } catch (error) {
     next(error);
@@ -420,11 +364,62 @@ const deleteMeeting = async (
 };
 
 //start meeting instantly on clicking start button on the home page
-const startMeeting = async () => {}
 
+const startMeeting = async (req, res, next) => {
+  try {
+    const userId = req.user.userId;
 
+    // Generate unique room id
+    //avoid roomid collision
+    let roomId;
+    let exists = true;
 
+    while (exists) {
+      roomId = crypto.randomBytes(8).toString("hex");
 
+      exists = await Meeting.exists({
+        roomId,
+      });
+    }
+
+    const now = new Date();
+
+    // Temporary duration
+    const endTime = new Date(now.getTime() + 60 * 60 * 1000);
+
+    const meeting = await Meeting.create({
+      title: "Instant Meeting",
+      description: "Started instantly",
+
+      organizer: userId,
+
+      participants: [userId],
+
+      roomId,
+
+      startTime: now,
+
+      endTime,
+
+      status: "active",
+    });
+
+    return res.status(201).json({
+      success: true,
+      message: "Instant meeting started successfully",
+
+      meeting: {
+        id: meeting._id,
+        roomId: meeting.roomId,
+        status: meeting.status,
+
+        joinLink: `${process.env.CLIENT_URL}/meeting/${meeting.roomId}`,
+      },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 // const inviteParticipant = async () => {}
 
@@ -446,6 +441,11 @@ const startMeeting = async () => {}
 // };
 
 module.exports = {
-  createMeeting,getMyMeetings,getMeetingById,joinMeeting ,endMeeting ,deleteMeeting ,startMeeting
-
+  createMeeting,
+  getMyMeetings,
+  getMeetingById,
+  joinMeeting,
+  endMeeting,
+  deleteMeeting,
+  startMeeting,
 };

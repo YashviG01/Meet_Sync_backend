@@ -67,7 +67,7 @@ router.delete( "/:meetingId", protectRoute,meetingValidation ,validate, deleteMe
 router.post(
   "/start-instant",
   protectRoute,
-  startInstantMeeting
+  startMeeting
 );
 
 //leave meeting
