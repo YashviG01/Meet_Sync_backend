@@ -22,7 +22,7 @@ const {
 } = require("../controllers/meetingController");
 
 
-//routes
+//routes for meeting management
 
 //schedule meeting
 router.post(

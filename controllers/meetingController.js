@@ -1,8 +1,7 @@
 const Meeting = require("../models/Meeting");
 const crypto = require("crypto");
 
-const Meeting = require("../models/Meeting");
-const crypto = require("crypto");
+
 
 //schedule a meet
 const createMeeting = async (req, res, next) => {
