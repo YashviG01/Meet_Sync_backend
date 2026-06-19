@@ -4,7 +4,9 @@ const socketHandler = (io) => {
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
 
-    socket.on("join-room", (roomId, user) => {
+
+
+    socket.on("join-room", ({roomId, user}) => {
       socket.join(roomId);
 
       const room = io.sockets.adapter.rooms.get(roomId);
@@ -31,13 +33,17 @@ const socketHandler = (io) => {
 
       io.to(roomId).emit(
         "room-users",
-        roomUsers[roomId],
+        roomUsers[roomId]);
+
+        io.to(roomId).emit(
         "participant-count",
         participantCount,
       );
 
       console.log(`${socket.id} joined room ${roomId}`);
     });
+
+    
 
     socket.on("disconnect", () => {
       const roomId = socket.roomId;
@@ -61,12 +67,28 @@ const socketHandler = (io) => {
 
 
 
-    socket.on("send-message", ({ messageData }) => {
-      console.log("message sent", messageData);
-      io.to(messageData.roomId).emit("receive-message", {
-        messageData,
-      });
+    socket.on("send-message", ( messageData ) => {
+      console.log("backend received", messageData);
+      io.to(messageData.roomId).emit("receive-message", 
+        messageData
+      );
     });
+
+
+    socket.on(
+  "typing",
+  ({ roomId, userName }) => {
+
+    socket
+      .to(roomId)
+      .emit(
+        "user-typing",
+        userName
+      );
+
+  }
+);
+
   });
 };
 
