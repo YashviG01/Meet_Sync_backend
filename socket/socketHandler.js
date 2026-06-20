@@ -33,6 +33,7 @@ const socketHandler = (io) => {
       }
 
 // Notify existing users that a new user joined
+//this is the emit part
       socket.to(roomId).emit("user-joined", {
         socketId: socket.id,
         user,
@@ -128,6 +129,30 @@ const socketHandler = (io) => {
       }
     );
 
+
+
+//screen-sharing
+socket.on(
+  "screen-share-status",
+  ({
+    roomId,
+    isSharing,
+    userName,
+  }) => {
+     console.log(
+      "Backend received screen-share-status"
+    );
+
+    socket.to(roomId).emit(
+      "screen-share-status",
+      {
+        isSharing,
+        userName,
+      }
+    );
+
+  }
+);
 
     //disconnect
    socket.on("disconnect", () => {
