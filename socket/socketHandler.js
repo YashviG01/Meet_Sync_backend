@@ -1,11 +1,12 @@
 const roomUsers = {};
 
 const socketHandler = (io) => {
+  //connection
   io.on("connection", (socket) => {
     console.log(`User connected: ${socket.id}`);
 
 
-
+//join room
     socket.on("join-room", ({roomId, user}) => {
       socket.join(roomId);
 
@@ -30,11 +31,11 @@ const socketHandler = (io) => {
           userName: user.name,
         });
       }
-
+//participant list
       io.to(roomId).emit(
         "room-users",
         roomUsers[roomId]);
-
+//participant count
         io.to(roomId).emit(
         "participant-count",
         participantCount,
@@ -44,7 +45,7 @@ const socketHandler = (io) => {
     });
 
     
-
+//disconnect
     socket.on("disconnect", () => {
       const roomId = socket.roomId;
 
@@ -61,6 +62,17 @@ const socketHandler = (io) => {
     );
   }
 
+
+   const room = io.sockets.adapter.rooms.get(roomId);
+
+const participantCount = room?.size || 0;
+//update participant count when user leaves
+io.to(roomId).emit(
+  "participant-count",
+  participantCount
+);
+  
+
       console.log(`User disconnected: ${socket.id}`);
 
     });
@@ -74,7 +86,7 @@ const socketHandler = (io) => {
       );
     });
 
-
+//typing
     socket.on(
   "typing",
   ({ roomId, userName }) => {
@@ -88,6 +100,17 @@ const socketHandler = (io) => {
 
   }
 );
+
+
+//offer
+socket.on("offer", () => {});
+
+//answer
+socket.on("answer", () => {});
+
+// //ice-candidates
+socket.on("ice-candidate", () => {});
+
 
   });
 };
