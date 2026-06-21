@@ -31,14 +31,36 @@ const socketHandler = (io) => {
           userName: user.name,
         });
       }
+      const existingParticipants =
+  roomUsers[roomId].filter(
+    (u) => u.socketId !== socket.id
+  );
+  console.log(
+  "existing participants",
+  existingParticipants
+);
+
+socket.emit(
+  "existing-participants",
+  existingParticipants
+);
+
+
 
 // Notify existing users that a new user joined
 //this is the emit part
-      socket.to(roomId).emit("user-joined", {
-        socketId: socket.id,
-        user,
-      });
 
+  console.log(
+  `participant joined ${socket.id}`
+);
+    socket.to(roomId).emit(
+  "participant-joined",
+  {
+    socketId: socket.id,
+    userId: user._id,
+    userName: user.name,
+  }
+);
 
 //participant list
       io.to(roomId).emit(
@@ -84,50 +106,64 @@ const socketHandler = (io) => {
 //webrtc signalling further---
 
 //offer
-  socket.on(
+ socket.on(
+  "offer",
+  ({
+    targetSocketId,
+    offer,
+    senderSocketId,
+  }) => {
+
+    io.to(targetSocketId).emit(
       "offer",
-      ({ roomId, offer, sender }) => {
-        socket.to(roomId).emit(
-          "offer",
-          {
-            offer,
-            sender,
-          }
-        );
+      {
+        offer,
+        senderSocketId,
       }
     );
+
+  }
+);
 //answer
-  socket.on(
+ socket.on(
+  "answer",
+  ({
+    targetSocketId,
+    answer,
+    senderSocketId,
+  }) => {
+
+    io.to(targetSocketId).emit(
       "answer",
-      ({ roomId, answer, sender }) => {
-        socket.to(roomId).emit(
-          "answer",
-          {
-            answer,
-            sender,
-          }
-        );
+      {
+        answer,
+        senderSocketId,
       }
     );
+
+  }
+);
 
 
 // //ice-candidates
- socket.on(
+socket.on(
+  "ice-candidate",
+  ({
+    targetSocketId,
+    candidate,
+    senderSocketId,
+  }) => {
+
+    io.to(targetSocketId).emit(
       "ice-candidate",
-      ({
-        roomId,
+      {
         candidate,
-        sender,
-      }) => {
-        socket.to(roomId).emit(
-          "ice-candidate",
-          {
-            candidate,
-            sender,
-          }
-        );
+        senderSocketId,
       }
     );
+
+  }
+);
 
 
 
