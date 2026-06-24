@@ -7,7 +7,7 @@ const sendEmail = require("../utils/sendEmail");
 //signup
 const signup = async (req, res, next) => {
   try {
-    console.log("signup invoked");
+    // console.log("signup invoked");
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     //user exists already
@@ -31,7 +31,8 @@ const signup = async (req, res, next) => {
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "strict",
+      sameSite: "lax",
+      secure:false,
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
