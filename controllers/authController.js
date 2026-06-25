@@ -7,7 +7,7 @@ const sendEmail = require("../utils/sendEmail");
 //signup
 const signup = async (req, res, next) => {
   try {
-    // console.log("signup invoked");
+    console.log("signup invoked");
     const { name, email, password } = req.body;
     const existingUser = await User.findOne({ email });
     //user exists already
@@ -238,9 +238,8 @@ const resetPassword = async (req, res, next) => {
       });
     }
 
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await bcrypt.hash(password, 10);//hashing the new pwd
 
-    user.password = hashedPassword;
     const samePassword = await bcrypt.compare(password, user.password);
 
     if (samePassword) {
@@ -249,6 +248,8 @@ const resetPassword = async (req, res, next) => {
         message: "New password must be different",
       });
     }
+        user.password = hashedPassword;
+
 
     user.resetPasswordToken = undefined;
 
