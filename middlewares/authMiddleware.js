@@ -14,7 +14,17 @@ if(token)
     console.log("decodedToken",decodedToken)
     const resp=await User.findById(decodedToken.userId).select("-password");//only fetch the required data ,not the complete details of the user
     console.log("resp",resp)
-    req.user=resp;
+    // req.user=resp;
+    req.user = {
+  id: resp._id.toString(),
+  name: resp.name,
+  email: resp.email,
+};
+    
+    
+    
+    
+    //a mongodb document
     console.log("req.user",req.user)
     next();
 }

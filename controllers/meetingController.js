@@ -366,8 +366,10 @@ const deleteMeeting = async (req, res, next) => {
 
 const startMeeting = async (req, res, next) => {
   try {
-    const userId = req.user._id;
-
+    const userId = req.user.id;
+    console.log("req.user.id given below followed by .Id")
+console.log(req.user.id)
+// console.log(req.user.Id)//undefined:does not exist
     // Generate unique room id
     //avoid roomid collision
     let roomId;
