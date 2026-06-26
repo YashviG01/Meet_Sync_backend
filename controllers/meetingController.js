@@ -366,7 +366,7 @@ const deleteMeeting = async (req, res, next) => {
 
 const startMeeting = async (req, res, next) => {
   try {
-    const userId = req.user.userId;
+    const userId = req.user._id;
 
     // Generate unique room id
     //avoid roomid collision
