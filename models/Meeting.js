@@ -43,7 +43,11 @@ const meetingSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-
+    //track the time when it ended might be diff from the time mentioned when the meet was scheduled
+endedAt: {
+    type: Date,
+       default: null,
+},
     status: {
       type: String,
       enum: [

@@ -1,4 +1,75 @@
+const completeMeeting =
+require("../utils/completeMeeting");
+
+
 const roomUsers = {};
+
+//room management helper
+const removeParticipant = async (
+  io,
+  socket
+) => {
+
+  const roomId = socket.roomId;
+
+  if (
+    !roomId ||
+    !roomUsers[roomId]
+  ) {
+    return;
+  }
+
+  console.log(
+    `Removing participant ${socket.id}`
+  );
+
+  // Remove participant
+  roomUsers[roomId] =
+    roomUsers[roomId].filter(
+      (user) =>
+        user.socketId !== socket.id
+    );
+
+  // Updated participant list
+  io.to(roomId).emit(
+    "room-users",
+    roomUsers[roomId]
+  );
+
+  // Updated count
+  io.to(roomId).emit(
+    "participant-count",
+    roomUsers[roomId].length
+  );
+
+  // Notify others
+  socket.to(roomId).emit(
+    "user-left",
+    {
+      socketId: socket.id,
+    }
+  );
+
+  // Empty room?
+  if (
+    roomUsers[roomId].length === 0
+  ) {
+
+    console.log(
+      `Room ${roomId} is now empty`
+    );
+
+    await completeMeeting(
+        roomId
+    );
+    // Complete meeting
+
+    delete roomUsers[roomId];
+  }
+
+};
+
+
 
 const socketHandler = (io) => {
   //connection
@@ -9,6 +80,8 @@ const socketHandler = (io) => {
 //join room
     socket.on("join-room", ({roomId, user}) => {
       socket.join(roomId);
+          console.log("ROOM ID:", roomId);
+    console.log("USER:", user);
 
       const room = io.sockets.adapter.rooms.get(roomId);
 
@@ -190,46 +263,39 @@ socket.on(
   }
 );
 
-    //disconnect
-   socket.on("disconnect", () => {
-  const roomId = socket.roomId;
 
-  if (roomId && roomUsers[roomId]) {
+//leave-meetroom,no payload becos already set during join socket.roomid=roomid
+socket.on(
+  "leave-room",
+  async () => {
 
-    roomUsers[roomId] =
-      roomUsers[roomId].filter(
-        (user) =>
-          user.socketId !== socket.id
-      );
-
-    io.to(roomId).emit(
-      "room-users",
-      roomUsers[roomId]
+    await removeParticipant(
+      io,
+      socket
     );
 
-    io.to(roomId).emit(
-      "participant-count",
-      roomUsers[roomId].length
+    socket.leave(
+      socket.roomId
     );
-//applicable for upto 3 participants .will have to switch to target socketId for 3+
-    socket.to(roomId).emit(
-          "user-left",
-          {
-            socketId: socket.id,
-          }
-        );
 
-
-
-    if (roomUsers[roomId].length === 0) {
-      delete roomUsers[roomId];
-    }
   }
+);
+    //disconnect
+ socket.on(
+  "disconnect",
+  async () => {
 
-  console.log(
-    `User disconnected: ${socket.id}`
-  );
-});
+    await removeParticipant(
+      io,
+      socket
+    );
+
+    console.log(
+      `User disconnected ${socket.id}`
+    );
+
+  }
+);
 
 
   });
