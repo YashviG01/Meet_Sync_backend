@@ -2,6 +2,7 @@ const { validationResult } =
   require("express-validator");
 
 const validate = (req, res, next) => {
+  console.log("join middleware called")
   const errors =
     validationResult(req);
 

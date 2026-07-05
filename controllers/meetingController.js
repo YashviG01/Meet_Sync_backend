@@ -187,13 +187,14 @@ const getMeetingById = async (req, res, next) => {
 
 const joinMeeting = async (req, res, next) => {
   try {
+    console.log(req.user)
     const { meetingId } = req.params;
-    const userId = req.user.userId;
+    const userId = req.user.id;//used to identify the host
 
     const meeting = await Meeting.findOne({
       roomId: meetingId,
     });
-
+// console.log("meeting details fetched from the db", meeting);
     if (!meeting) {
       return res.status(404).json({
         success: false,
@@ -218,10 +219,12 @@ const joinMeeting = async (req, res, next) => {
     }
 
     const isHost = meeting.organizer.toString() === userId.toString();
-
     //   If host joins a scheduled meeting,
     //   automatically start it.
+    //host tries to join an instant meet wont be able to ,return already joined
 
+
+    //host tryin to nter a scheduled meet
     if (isHost && meeting.status === "scheduled") {
       meeting.status = "active";
     }
@@ -229,6 +232,7 @@ const joinMeeting = async (req, res, next) => {
     const alreadyJoined = meeting.participants.some(
       (participant) => participant.toString() === userId.toString(),
     );
+    console.log("alreadyJoined", alreadyJoined);
 
     if (!alreadyJoined) {
       meeting.participants.push(userId);
@@ -242,7 +246,7 @@ const joinMeeting = async (req, res, next) => {
         ? "You have already joined this meeting"
         : "Joined meeting successfully",
 
-      roomId: meeting.roomId,
+      roomId: meeting.roomId,//would be used by the frontend to mount the meeting room
 
       meetingStatus: meeting.status,
 
@@ -367,14 +371,14 @@ const deleteMeeting = async (req, res, next) => {
 const startMeeting = async (req, res, next) => {
   try {
     const userId = req.user.id;
-    console.log("req.user.id given below followed by .Id")
-console.log(req.user.id)
+    // console.log("req.user.id given below followed by .Id")
+// console.log(req.user.id)
 // console.log(req.user.Id)//undefined:does not exist
     // Generate unique room id
     //avoid roomid collision
     let roomId;
     let exists = true;
-
+//genrate a room id
     while (exists) {
       roomId = crypto.randomBytes(8).toString("hex");
 
@@ -392,7 +396,7 @@ console.log(req.user.id)
       title: "Instant Meeting",
       description: "Started instantly",
 
-      organizer: userId,
+      organizer: userId,//would be matched later to identify if already joined or not
 
       participants: [userId],
 
