@@ -1,7 +1,6 @@
 const jwt=require("jsonwebtoken");
 const User=require("../models/User.js");// model importing for loking up later
 const protectRoute=async(req,res,next)=>{
-   console.log("protectRoute middleware invoked joinn");
     try{
         console.log("COOKIE:", req.cookies);
         const token=req.cookies.token;

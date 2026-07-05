@@ -5,10 +5,15 @@ const crypto = require("crypto");
 
 //schedule a meet
 const createMeeting = async (req, res, next) => {
+
   try {
+    console.log(req.body)
+        console.log(req.user)
+console.log(req.user.id)
+
     const { title, description, startTime, endTime } = req.body;
 
-    const organizer = req.user._id;
+    const organizer = req.user.id;
 
     const start = new Date(startTime);
     const end = new Date(endTime);
@@ -232,7 +237,7 @@ const joinMeeting = async (req, res, next) => {
     const alreadyJoined = meeting.participants.some(
       (participant) => participant.toString() === userId.toString(),
     );
-    console.log("alreadyJoined", alreadyJoined);
+    // console.log("alreadyJoined", alreadyJoined);
 
     if (!alreadyJoined) {
       meeting.participants.push(userId);
@@ -242,6 +247,7 @@ const joinMeeting = async (req, res, next) => {
 
     return res.status(200).json({
       success: true,
+      alreadyJoined,
       message: alreadyJoined
         ? "You have already joined this meeting"
         : "Joined meeting successfully",

@@ -1,9 +1,6 @@
 const { param } = require("express-validator");
 
   
-
-
-
 const joinMeetingValidation = [
   param("meetingId")
     .trim()
