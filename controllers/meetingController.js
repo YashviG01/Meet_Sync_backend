@@ -63,6 +63,9 @@ console.log(req.user.id)
 // GET    /api/meetings        → get my meetings
 const getMyMeetings = async (req, res, next) => {
   try {
+    console.log(req.user)
+
+    //might have to chnage the userid to id
     const userId = req.user.userId;
 
     if (!userId) {
@@ -92,17 +95,17 @@ const getMyMeetings = async (req, res, next) => {
     //transforming raw to frontend friendly data for each meeting details
     const enrichedMeetings = meetings.map((m) => {
       return {
-        _id: m._id,
-        title: m.title,
-        description: m.description,
-        meetingId: m.roomId,
-        organizer: m.organizer,
-        participants: m.participants,
-        startTime: m.startTime,
-        endTime: m.endTime,
-        status: m.status,
+        _id: meeting._id,
+        title: meeting.title,
+        description: meeting.description,
+        meetingId: meeting.roomId,
+        organizer: meeting.organizer,
+        participants: meeting.participants,
+        startTime: meeting.startTime,
+        endTime: meeting.endTime,
+        status: meeting.status,
 
-        isHost: m.organizer._id.toString() === userId.toString(),
+        isHost: meeting.organizer._id.toString() === userId.toString(),
       };
     });
 
