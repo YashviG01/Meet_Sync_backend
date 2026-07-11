@@ -46,6 +46,7 @@ console.log(req.user.id)
       endTime: end,
       participants: [organizer],
       status: "scheduled",
+       meetingType: "scheduled",
     });
 
     const joinLink = `${process.env.CLIENT_URL}/meeting/join/${roomId}`;
@@ -66,7 +67,9 @@ const getMyMeetings = async (req, res, next) => {
     console.log(req.user)
 
     //might have to chnage the userid to id
-    const userId = req.user.userId;
+        const userId = req.user.id;
+
+    // const userId = req.user.userId;
 
     if (!userId) {
       return res.status(401).json({
@@ -78,6 +81,7 @@ const getMyMeetings = async (req, res, next) => {
     //collect all the meetings
     //it would appear in the participants dashboard after the person has joined the meet.it would appear from the start in the dashboard of the person who is the host
     const meetings = await Meeting.find({
+       meetingType: "scheduled",
       $or: [{ organizer: userId }, { participants: userId }],
     })
       .populate("organizer", "name email")
@@ -93,21 +97,33 @@ const getMyMeetings = async (req, res, next) => {
     }
 
     //transforming raw to frontend friendly data for each meeting details
-    const enrichedMeetings = meetings.map((m) => {
-      return {
-        _id: meeting._id,
-        title: meeting.title,
-        description: meeting.description,
-        meetingId: meeting.roomId,
-        organizer: meeting.organizer,
-        participants: meeting.participants,
-        startTime: meeting.startTime,
-        endTime: meeting.endTime,
-        status: meeting.status,
+    // const enrichedMeetings = meetings.map((m) => {
+    //   return {
+    //     _id: meeting._id,
+    //     title: meeting.title,
+    //     description: meeting.description,
+    //     meetingId: meeting.roomId,
+    //     organizer: meeting.organizer,
+    //     participants: meeting.participants,
+    //     startTime: meeting.startTime,
+    //     endTime: meeting.endTime,
+    //     status: meeting.status,
 
-        isHost: meeting.organizer._id.toString() === userId.toString(),
-      };
-    });
+    //     isHost: meeting.organizer._id.toString() === userId.toString(),
+    //   };
+    // });
+
+    //updated controller
+    const enrichedMeetings = meetings.map((meeting) => ({
+    _id: meeting._id,
+    title: meeting.title,
+    roomId: meeting.roomId,
+    organizer: meeting.organizer,
+    startTime: meeting.startTime,
+    status: meeting.status,
+    isHost:
+        meeting.organizer._id.toString() === userId.toString(),
+}));
 
     return res.status(200).json({
       success: true,
@@ -268,6 +284,7 @@ const joinMeeting = async (req, res, next) => {
 
 //(host only)
 
+
 const endMeeting = async (req, res, next) => {
   try {
     const { meetingId } = req.params;
@@ -416,6 +433,7 @@ const startMeeting = async (req, res, next) => {
       endTime,
 
       status: "active",
+       meetingType: "instant",
     });
 
     return res.status(201).json({
@@ -426,7 +444,7 @@ const startMeeting = async (req, res, next) => {
         id: meeting._id,
         roomId: meeting.roomId,
         status: meeting.status,
-
+meetingType:meeting.meetingType,
         joinLink: `${process.env.CLIENT_URL}/meeting/${meeting.roomId}`,
       },
     });

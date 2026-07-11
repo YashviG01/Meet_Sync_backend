@@ -58,6 +58,11 @@ endedAt: {
       ],
       default: "scheduled",
     },
+    meetingType: {
+    type: String,
+    enum: ["instant", "scheduled"],
+    default: "scheduled",
+},
   },
   {
     timestamps: true,
