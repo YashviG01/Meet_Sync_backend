@@ -263,13 +263,21 @@ const joinMeeting = async (req, res, next) => {
     }
 
     await meeting.save();
+    //avoid already joined message for the host
+    let message;
+
+if (isHost) {
+  message = "Welcome to your meeting";
+} else {
+  message = alreadyJoined
+    ? "You have already joined this meeting"
+    : "Joined meeting successfully";
+}
 
     return res.status(200).json({
       success: true,
       alreadyJoined,
-      message: alreadyJoined
-        ? "You have already joined this meeting"
-        : "Joined meeting successfully",
+      message,
 
       roomId: meeting.roomId,//would be used by the frontend to mount the meeting room
 
