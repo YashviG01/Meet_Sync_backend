@@ -356,8 +356,11 @@ const endMeeting = async (req, res, next) => {
 //(host only)
 const deleteMeeting = async (req, res, next) => {
   try {
+    console.log(req.params)
     const { meetingId } = req.params;
-    const userId = req.user.userId;
+
+
+    const userId = req.user.id;
 
     const meeting = await Meeting.findOne({
       roomId: meetingId,
